@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GameBrain API Tutorial - Game Search App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            border: 2px solid #e1e8ed;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        #searchInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        #searchButton {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        #searchButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        #searchButton:active {
+            transform: translateY(0);
+        }
+
+        select {
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #e1e8ed;
+            border-radius: 25px;
+            outline: none;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .game {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .game:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .game h3 {
+            color: #2c3e50;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+            font-weight: 600;
+        }
+
+        .game img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .game:hover img {
+            transform: scale(1.05);
+        }
+
+        .game-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .game p {
+            margin: 0.3rem 0;
+            font-size: 0.95rem;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .game p strong {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .game-score {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            font-size: 1.1rem;
+            padding: 2rem;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(231, 76, 60, 0.2);
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #667eea;
+            padding: 2rem;
+        }
+
+        .no-results {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            padding: 2rem;
+            background: rgba(127, 140, 141, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(127, 140, 141, 0.2);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+        }
+
+        .close:hover {
+            color: #667eea;
+        }
+
+        .modal h2 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            padding-right: 40px;
+        }
+
+        .modal img {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .game-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .detail-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .api-key-notice {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border: 2px solid #f39c12;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .api-key-notice h3 {
+            color: #e17055;
+            margin-bottom: 1rem;
+        }
+
+        .api-key-notice p {
+            color: #2d3436;
+            margin: 0.5rem 0;
+        }
+
+        .api-key-notice a {
+            color: #0984e3;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .api-key-notice a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1.5rem;
+                border-radius: 15px;
+            }
+
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .search-row, .filters-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            #searchInput, #searchButton, select {
+                padding: 0.8rem 1.2rem;
+                font-size: 1rem;
+            }
+
+            #results {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .game-info {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                padding: 1.5rem;
+                width: 95%;
+            }
+
+            .game-details {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .game {
+                padding: 1rem;
+            }
+
+            .modal-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>GameBrain Game Search</h1>
+    
+    <div class="api-key-notice">
+        <h3>🔑 API Key Required</h3>
+        <p>To use this app, you'll need a free GameBrain API key.</p>
+        <p>Get yours at: <a href="https://gamebrain.co/api" target="_blank">gamebrain.co/api</a></p>
+        <p>Then replace 'YOUR_API_KEY' in the JavaScript code below with your actual key.</p>
+    </div>
+    
+    <div class="search-container">
+        <div class="search-row">
+            <input type="text" id="searchInput" placeholder="Search for games... (e.g., 'action games from 2024')">
+            <button id="searchButton">Search</button>
+        </div>
+        
+        <div class="filters-row">
+            <select id="sortBy">
+                <option value="">Sort by...</option>
+                <option value="rating">Highest Rated</option>
+                <option value="release_date">Newest First</option>
+                <option value="popularity">Most Popular</option>
+            </select>
+            
+            <select id="platform">
+                <option value="">All Platforms</option>
+                <option value="pc">PC</option>
+                <option value="playstation">PlayStation</option>
+                <option value="xbox">Xbox</option>
+                <option value="nintendo">Nintendo</option>
+                <option value="mobile">Mobile</option>
+            </select>
+            
+            <select id="genre">
+                <option value="">All Genres</option>
+                <option value="action">Action</option>
+                <option value="adventure">Adventure</option>
+                <option value="rpg">RPG</option>
+                <option value="strategy">Strategy</option>
+                <option value="fps">First Person Shooter</option>
+                <option value="sports">Sports</option>
+                <option value="racing">Racing</option>
+                <option value="puzzle">Puzzle</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="results"></div>
+</div>
+
+<!-- Modal for game details -->
+<div id="gameModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalContent">
+            <!-- Game details will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // 🔑 Replace with your actual GameBrain API key
+    const API_KEY = 'YOUR_API_KEY';
+    
+    // API Base URL
+    const API_BASE_URL = 'https://api.gamebrain.co/v1';
+    
+    // DOM elements
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const resultsDiv = document.getElementById('results');
+    const sortSelect = document.getElementById('sortBy');
+    const platformSelect = document.getElementById('platform');
+    const genreSelect = document.getElementById('genre');
+    const modal = document.getElementById('gameModal');
+    const modalContent = document.getElementById('modalContent');
+    const closeBtn = document.getElementsByClassName('close')[0];
+    
+    // Debug: Check if DOM elements are found
+    console.log('DOM Elements found:');
+    console.log('searchInput:', searchInput);
+    console.log('searchButton:', searchButton);
+    console.log('resultsDiv:', resultsDiv);
+    console.log('sortSelect:', sortSelect);
+    
+    // Event listeners
+    if (searchButton) {
+        searchButton.addEventListener('click', function() {
+            console.log('Search button clicked!');
+            searchGames();
+        });
+        console.log('Search button event listener attached');
+    } else {
+        console.error('Search button not found!');
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function (e) {
+            console.log('Key pressed:', e.key);
+            if (e.key === 'Enter') {
+                console.log('Enter key pressed, starting search');
+                searchGames();
+            }
+        });
+        console.log('Search input event listener attached');
+    } else {
+        console.error('Search input not found!');
+    }
+    
+    // Filter change listeners
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            console.log('Sort changed to:', sortSelect.value);
+            if (searchInput.value.trim()) {
+                searchGames();
+            }
+        });
+    }
+    
+    if (platformSelect) {
+        platformSelect.addEventListener('change', function() {
+            console.log('Platform changed to:', platformSelect.value);
+            if (searchInput.value.trim()) {
+                searchGames();
+            }
+        });
+    }
+    
+    if (genreSelect) {
+        genreSelect.addEventListener('change', function() {
+            console.log('Genre changed to:', genreSelect.value);
+            if (searchInput.value.trim()) {
+                searchGames();
+            }
+        });
+    }
+    
+    // Modal event listeners
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+    
+    if (modal) {
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    }
+    
+    /**
+     * Main search function
+     * Searches for games using the GameBrain API
+     */
+    function searchGames() {
+        const query = searchInput.value.trim();
+        
+        // Check if API key is set
+        if (API_KEY === 'YOUR_API_KEY') {
+            resultsDiv.innerHTML = '<div class="error">Please set your GameBrain API key in the JavaScript code!</div>';
+            return;
+        }
+        
+        if (!query) {
+            resultsDiv.innerHTML = '<div class="error">Please enter a search term.</div>';
+            return;
+        }
+        
+        // Build API URL with parameters
+        const url = buildSearchURL(query);
+        
+        // Show loading state
+        resultsDiv.innerHTML = '<div class="loading">🎮 Searching for games...</div>';
+        
+        // Debug: Log the URL being called
+        console.log('API URL:', url);
+        
+        // Make API request
+        fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Debug: Log the received data
+            console.log('API Response:', data);
+            console.log('Results count:', data.results ? data.results.length : 0);
+            displayGames(data);
+        })
+        .catch(error => {
+            console.error('Error fetching games:', error);
+            resultsDiv.innerHTML = '<div class="error">Error fetching games. Please check your API key and try again. Check console for details.</div>';
+        });
+    }
+    
+    /**
+     * Build search URL with query parameters
+     */
+    function buildSearchURL(query) {
+        const params = new URLSearchParams();
+        
+        // Main search query
+        params.append('query', query);
+        
+        // Add filters if selected
+        const sortBy = sortSelect.value;
+        const platform = platformSelect.value;
+        const genre = genreSelect.value;
+        
+        if (sortBy) {
+            params.append('sort', sortBy);
+        }
+        
+        if (platform) {
+            params.append('platform', platform);
+        }
+        
+        if (genre) {
+            params.append('genre', genre);
+        }
+        
+        // Limit results (set higher limit to get more results)
+        params.append('limit', '20');
+        
+        const url = `${API_BASE_URL}/games?${params.toString()}`;
+        console.log('Built URL:', url);
+        return url;
+    }
+    
+    /**
+     * Display search results
+     */
+    function displayGames(data) {
+        console.log('DisplayGames called with:', data);
+        resultsDiv.innerHTML = '';
+        
+        // Check if we have results
+        if (!data.results || data.results.length === 0) {
+            console.log('No results found');
+            resultsDiv.innerHTML = '<div class="no-results">No games found. Try a different search term or adjust your filters!</div>';
+            return;
+        }
+        
+        console.log('Found', data.results.length, 'games');
+        
+        // Display each game
+        data.results.forEach((game, index) => {
+            console.log(`Processing game ${index}:`, game);
+            try {
+                const gameDiv = createGameCard(game);
+                resultsDiv.appendChild(gameDiv);
+            } catch (error) {
+                console.error(`Error creating card for game ${index}:`, error, game);
+            }
+        });
+        
+        console.log('Finished displaying games');
+    }
+    
+    /**
+     * Create a game card element
+     */
+    function createGameCard(game) {
+        const gameDiv = document.createElement('div');
+        gameDiv.className = 'game';
+        gameDiv.onclick = () => showGameDetails(game.id);
+        
+        // Game image (with better fallback handling)
+        const imageUrl = game.image || 'https://via.placeholder.com/350x200/667eea/ffffff?text=No+Image';
+        
+        // Game score formatting (rating.mean is between 0-1, so convert to 0-10 scale)
+        let score = 'N/A';
+        if (game.rating && typeof game.rating.mean === 'number') {
+            score = (game.rating.mean * 10).toFixed(1);
+        }
+        
+        // Release year
+        const releaseYear = game.year || 'TBA';
+        
+        // Genre - handle both string and array formats
+        let genre = 'Various';
+        if (typeof game.genre === 'string') {
+            genre = game.genre;
+        } else if (game.genres && Array.isArray(game.genres)) {
+            genre = game.genres.slice(0, 2).map(g => g.name || g).join(', ');
+        }
+        
+        // Platforms - handle array format, take first two
+        let platforms = 'Multiple';
+        if (game.platforms && Array.isArray(game.platforms)) {
+            platforms = game.platforms.slice(0, 2).map(p => p.name || p).join(', ');
+        }
+        
+        gameDiv.innerHTML = `
+            <h3>${game.name || 'Unknown Game'}</h3>
+            <img src="${imageUrl}" alt="${game.name || 'Game'}" loading="lazy" onerror="this.src='https://via.placeholder.com/350x200/667eea/ffffff?text=No+Image'">
+            <div class="game-info">
+                <p><strong>Score:</strong> <span class="game-score">${score}</span></p>
+                <p><strong>Released:</strong> ${releaseYear}</p>
+                <p><strong>Platforms:</strong> ${platforms}</p>
+                <p><strong>Genre:</strong> ${genre}</p>
+            </div>
+        `;
+        
+        return gameDiv;
+    }
+    
+    /**
+     * Show detailed game information in modal
+     */
+    function showGameDetails(gameId) {
+        if (!gameId) return;
+        
+        modalContent.innerHTML = '<div class="loading">Loading game details...</div>';
+        modal.style.display = 'block';
+        
+        // Fetch detailed game information
+        fetch(`${API_BASE_URL}/games/${gameId}`, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(game => {
+            displayGameDetails(game);
+        })
+        .catch(error => {
+            console.error('Error fetching game details:', error);
+            modalContent.innerHTML = '<div class="error">Error loading game details.</div>';
+        });
+    }
+    
+    /**
+     * Display detailed game information in modal
+     */
+    function displayGameDetails(game) {
+        const imageUrl = game.image || 'https://via.placeholder.com/400x300/667eea/ffffff?text=No+Image';
+        const score = game.rating && game.rating.mean ? (game.rating.mean * 10).toFixed(1) : 'N/A';
+        const reviewCount = game.rating && game.rating.count ? game.rating.count.toLocaleString() : 'N/A';
+        
+        modalContent.innerHTML = `
+            <h2>${game.name}</h2>
+            <img src="${imageUrl}" alt="${game.name}">
+            
+            <div class="game-details">
+                <div class="detail-item">
+                    <strong>Game Brain Score</strong>
+                    <span class="game-score">${score}/10</span>
+                </div>
+                
+                <div class="detail-item">
+                    <strong>Release Year</strong>
+                    ${game.year || 'TBA'}
+                </div>
+                
+                <div class="detail-item">
+                    <strong>Genre</strong>
+                    ${game.genre || 'Unknown'}
+                </div>
+                
+                <div class="detail-item">
+                    <strong>Review Count</strong>
+                    ${reviewCount}
+                </div>
+                
+                <div class="detail-item">
+                    <strong>Adult Content</strong>
+                    ${game.adult_only ? 'Yes' : 'No'}
+                </div>
+                
+                <div class="detail-item">
+                    <strong>GameBrain Link</strong>
+                    <a href="${game.link || '#'}" target="_blank" style="color: #667eea;">View on GameBrain</a>
+                </div>
+            </div>
+            
+            ${game.short_description ? `
+                <div class="detail-item" style="grid-column: 1 / -1; margin-top: 1rem;">
+                    <strong>Description</strong>
+                    <p style="margin-top: 0.5rem; line-height: 1.6;">
+                        ${game.short_description.replace(/"/g, '')}
+                    </p>
+                </div>
+            ` : ''}
+            
+            ${game.screenshots && game.screenshots.length > 0 ? `
+                <div class="detail-item" style="grid-column: 1 / -1; margin-top: 1rem;">
+                    <strong>Screenshots</strong>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                        ${game.screenshots.slice(0, 4).map(screenshot => 
+                            `<img src="${screenshot}" alt="Screenshot" style="width: 150px; height: 100px; object-fit: cover; border-radius: 8px;">`
+                        ).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${game.gameplay ? `
+                <div class="detail-item" style="grid-column: 1 / -1; margin-top: 1rem;">
+                    <strong>Gameplay Video</strong>
+                    <iframe src="${game.gameplay}" width="100%" height="300" frameborder="0" allowfullscreen style="border-radius: 10px; margin-top: 0.5rem;"></iframe>
+                </div>
+            ` : ''}
+        `;
+    }
+    
+    /**
+     * Close the modal
+     */
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+    
+    // Example search on page load
+    window.addEventListener('load', function() {
+        searchInput.value = 'popular action games';
+        console.log('Page loaded, JavaScript is working');
+        // Uncomment the line below to search automatically on page load
+        // searchGames();
+    });
+    
+    // Debug: Test if JavaScript is working
+    console.log('GameBrain API script loaded successfully');
+    console.log('API_KEY set to:', API_KEY === 'YOUR_API_KEY' ? 'DEFAULT (needs to be replaced)' : 'CUSTOM KEY SET');
+</script>
+
+<!-- GameBrain API Attribution (required for free tier) -->
+<div style="text-align: center; margin-top: 2rem; padding: 1rem; color: #666;">
+    Powered by <a href="https://gamebrain.co/api" target="_blank" style="color: #667eea; text-decoration: none;">GameBrain Video Games API</a>
+</div>
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"900a94fc78ff4300bdccbdebe8a6c2cf","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0dadb09ea220441',t:'MTc4MTc5MTU5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

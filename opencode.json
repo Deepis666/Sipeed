@@ -1,0 +1,69 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "build": {
+      "mode": "primary",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "task": {
+          "*": "allow"
+        }
+      }
+    },
+    "plan": {
+      "mode": "primary",
+      "permission": {
+        "edit": "deny",
+        "bash": "deny",
+        "task": {
+          "test-runner": "allow",
+          "code-reviewer": "allow"
+        }
+      }
+    },
+    "test-runner": {
+      "description": "Runs project tests (vitest for frontend, cargo test for Rust), reports failures in a structured format without modifying code",
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny",
+        "bash": {
+          "*": "allow"
+        }
+      }
+    },
+    "code-reviewer": {
+      "description": "Reviews code quality, runs typecheck (vue-tsc) and lint, reports issues in a structured format without modifying code",
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny",
+        "bash": {
+          "*": "allow"
+        }
+      }
+    },
+    "code-fixer": {
+      "description": "Reads test failure or review reports and fixes code accordingly. Re-runs tests/checks after fixing to verify the fix works",
+      "mode": "subagent",
+      "permission": {
+        "edit": "allow",
+        "bash": {
+          "*": "allow"
+        }
+      }
+    },
+    "log-keeper": {
+      "description": "Maintains CHANGELOG.md and development logs. Records what was changed, why, and by which step in the workflow. Reads git diff and writes structured log entries",
+      "mode": "subagent",
+      "permission": {
+        "edit": "allow",
+        "bash": {
+          "git diff": "allow",
+          "git diff --name-only": "allow",
+          "git log*": "allow",
+          "*": "deny"
+        }
+      }
+    }
+  }
+}
