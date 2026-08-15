@@ -62,25 +62,6 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 "#;
 
-/// Priority: 1) User setting in DB  2) Compile-time env var  3) Empty
-fn get_api_key(state: &DbState, setting_key: &str, compile_key: &str) -> Option<String> {
-    if let Ok(conn) = state.0.lock() {
-        if let Ok(Some(val)) = conn.query_row(
-            "SELECT value FROM settings WHERE key = ?1",
-            rusqlite::params![setting_key],
-            |row| row.get::<_, Option<String>>(0),
-        ) {
-            if !val.is_empty() {
-                return Some(val);
-            }
-        }
-    }
-    if !compile_key.is_empty() {
-        return Some(compile_key.to_string());
-    }
-    None
-}
-
 fn get_covers_dir() -> Result<PathBuf, String> {
     if cfg!(debug_assertions) {
         Ok(Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -306,8 +287,18 @@ fn db_path_from_handle(app_handle: &tauri::AppHandle) -> Result<PathBuf, String>
 }
 
 fn file_name_from_path(path: &Path) -> String {
-    path.file_stem()
-        .and_then(|stem| stem.to_str())
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .map(|name| {
+            // Unix 下反斜杠不是路径分隔符（如 "C:\Games\portal2.exe"），手动切分以兼容两种风格
+            name.rsplit(['/', '\\']).next().unwrap_or(name)
+        })
+        .map(|name| {
+            Path::new(name)
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .unwrap_or(name)
+        })
         .unwrap_or_default()
         .to_string()
 }
